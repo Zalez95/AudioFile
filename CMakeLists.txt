@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 project(AudioFile VERSION 1.0.2 LANGUAGES CXX)
 
 # Project options
-option(AUDIOFILE_BUILD_TESTS "Build the AudioFile tests" ON)
+option(AUDIOFILE_BUILD_TESTS "Build the AudioFile tests" OFF)
 
 # Set the project output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
@@ -36,10 +36,22 @@ set_target_properties(audioFile PROPERTIES
 	CXX_STANDARD_REQUIRED	On
 	DEBUG_POSTFIX			"d"
 )
-if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 	target_compile_options(audioFile PRIVATE -Wall -Werror -Wpedantic -Wno-sign-compare)
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(audioFile PRIVATE /W4 -D_CRT_SECURE_NO_WARNINGS)
+
+	option(FORCE_STATIC_VCRT "Force /MT for static VC runtimes" OFF)
+	if(FORCE_STATIC_VCRT)
+		foreach(flagVar
+			CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+		)
+			if(${flagVar} MATCHES "/MD")
+				string(REGEX REPLACE "/MD" "/MT" ${flagVar} "${${flagVar}}")
+			endif()
+		endforeach()
+	endif()
 endif()
 
 # Install the library
