@@ -4,42 +4,36 @@ cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 # 								AudioFile
 ###############################################################################
 # Project name and version
-project(AudioFile VERSION 1.0.2 LANGUAGES CXX)
+project(AudioFile LANGUAGES CXX)
+set(AUDIOFILE_VERSION_MAJOR "1")
+set(AUDIOFILE_VERSION_MINOR "0")
+set(AUDIOFILE_VERSION_REVISION "2")
+set(AUDIOFILE_VERSION "${AUDIOFILE_VERSION_MAJOR}.${AUDIOFILE_VERSION_MINOR}.${AUDIOFILE_VERSION_REVISION}")
 
 # Project options
 option(AUDIOFILE_BUILD_TESTS "Build the AudioFile tests" OFF)
-
-# Set the project output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib")
-foreach(outputConfig ${CMAKE_CONFIGURATION_TYPES})
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${outputConfig} "${CMAKE_SOURCE_DIR}/bin")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${outputConfig} "${CMAKE_SOURCE_DIR}/lib")
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${outputConfig} "${CMAKE_SOURCE_DIR}/lib")
-endforeach()
 
 # Find the library source files
 file(GLOB_RECURSE AUDIOFILE_SOURCES "src/*.cpp")
 
 # Create the library
-add_library(audioFile ${AUDIOFILE_SOURCES})
+add_library(AudioFile ${AUDIOFILE_SOURCES})
 
-target_include_directories(audioFile PUBLIC
+target_include_directories(AudioFile PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
 )
 
 # Add the compiler options
-set_target_properties(audioFile PROPERTIES
+set_target_properties(AudioFile PROPERTIES
 	CXX_STANDARD			11
 	CXX_STANDARD_REQUIRED	On
 	DEBUG_POSTFIX			"d"
 )
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	target_compile_options(audioFile PRIVATE -Wall -Werror -Wpedantic -Wno-sign-compare)
+	target_compile_options(AudioFile PRIVATE -Wall -Werror -Wpedantic -Wno-sign-compare)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-	target_compile_options(audioFile PRIVATE /W4 -D_CRT_SECURE_NO_WARNINGS)
+	target_compile_options(AudioFile PRIVATE /W4 -D_CRT_SECURE_NO_WARNINGS)
 
 	option(FORCE_STATIC_VCRT "Force /MT for static VC runtimes" OFF)
 	if(FORCE_STATIC_VCRT)
@@ -55,12 +49,25 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 # Install the library
-install(TARGETS audioFile
+install(TARGETS AudioFile EXPORT AudioFileTargets
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
+	RUNTIME DESTINATION bin
+	INCLUDES DESTINATION include
 )
-install(FILES "include/AudioFile.h"
-	DESTINATION include
+install(EXPORT AudioFileTargets
+	FILE AudioFileTargets.cmake
+	NAMESPACE AudioFile::
+	DESTINATION lib/cmake/AudioFile
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file("AudioFileConfigVersion.cmake"
+	VERSION ${AUDIOFILE_VERSION}
+	COMPATIBILITY SameMajorVersion
+)
+install(FILES "AudioFileConfig.cmake" "AudioFileConfigVersion.cmake"
+	DESTINATION lib/cmake/AudioFile
 )
 
 # Create the tests
